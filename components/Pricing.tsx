@@ -1,35 +1,33 @@
 'use client';
 
+import CustomizedButtons from './ui/Button/CustomBUtton';
+import Cards from './ui/Cards/Cards';
 import Button from '@/components/ui/Button';
 import { Database } from '@/types_db';
 import { postData } from '@/utils/helpers';
 import { getStripe } from '@/utils/stripe-client';
+import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Session, User } from '@supabase/supabase-js';
 import cn from 'classnames';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-type Subscription = Database['public']['Tables']['subscriptions']['Row'];
-type Product = Database['public']['Tables']['products']['Row'];
-type Price = Database['public']['Tables']['prices']['Row'];
-interface ProductWithPrices extends Product {
-  prices: Price[];
-}
-interface PriceWithProduct extends Price {
-  products: Product | null;
-}
-interface SubscriptionWithProduct extends Subscription {
-  prices: PriceWithProduct | null;
-}
+// #FF009B
 
-interface Props {
-  session: Session | null;
-  user: User | null | undefined;
-  products: ProductWithPrices[];
-  subscription: SubscriptionWithProduct | null;
-}
-
-type BillingInterval = 'lifetime' | 'year' | 'month';
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#FF009B'
+    }
+  }
+});
 
 export default function Pricing({
   session,
@@ -37,191 +35,113 @@ export default function Pricing({
   products,
   subscription
 }: Props) {
-  const intervals = Array.from(
-    new Set(
-      products.flatMap((product) =>
-        product?.prices?.map((price) => price?.interval)
-      )
-    )
-  );
+  const [age, setAge] = useState('');
+
+  const handleChange = (event: SelectChangeEvent) => {
+    setAge(event.target.value);
+  };
+
   const router = useRouter();
-  const [billingInterval, setBillingInterval] =
-    useState<BillingInterval>('month');
-  const [priceIdLoading, setPriceIdLoading] = useState<string>();
-
-  const handleCheckout = async (price: Price) => {
-    setPriceIdLoading(price.id);
-    if (!user) {
-      return router.push('/signin');
-    }
-    if (subscription) {
-      return router.push('/account');
-    }
-    try {
-      const { sessionId } = await postData({
-        url: '/api/create-checkout-session',
-        data: { price }
-      });
-
-      const stripe = await getStripe();
-      stripe?.redirectToCheckout({ sessionId });
-    } catch (error) {
-      return alert((error as Error)?.message);
-    } finally {
-      setPriceIdLoading(undefined);
-    }
-  }; 
 
   return (
     <section className="bg-black">
-      <div className="max-w-6xl px-4 py-8 mx-auto sm:py-24 sm:px-6 lg:px-8">
-        <div className="sm:flex sm:flex-col sm:align-center">
-          <h1 className="text-4xl font-extrabold text-white sm:text-center sm:text-6xl">
-            Pricing Plans
-          </h1>
-          <p className="max-w-2xl m-auto mt-5 text-xl text-zinc-200 sm:text-center sm:text-2xl">
-            Start building for free, then add a site plan to go live. Account
-            plans unlock additional features.
-          </p>
-          <div className="relative self-center mt-6 bg-zinc-900 rounded-lg p-0.5 flex sm:mt-8 border border-zinc-800">
-            {intervals.includes('month') && (
-              <button
-                onClick={() => setBillingInterval('month')}
-                type="button"
-                className={`${
-                  billingInterval === 'month'
-                    ? 'relative w-1/2 bg-zinc-700 border-zinc-800 shadow-sm text-white'
-                    : 'ml-0.5 relative w-1/2 border border-transparent text-zinc-400'
-                } rounded-md m-1 py-2 text-sm font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-50 focus:z-10 sm:w-auto sm:px-8`}
-              >
-                Monthly billing
-              </button>
-            )}
-            {intervals.includes('year') && (
-              <button
-                onClick={() => setBillingInterval('year')}
-                type="button"
-                className={`${
-                  billingInterval === 'year'
-                    ? 'relative w-1/2 bg-zinc-700 border-zinc-800 shadow-sm text-white'
-                    : 'ml-0.5 relative w-1/2 border border-transparent text-zinc-400'
-                } rounded-md m-1 py-2 text-sm font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-50 focus:z-10 sm:w-auto sm:px-8`}
-              >
-                Yearly billing
-              </button>
-            )}
+      <ThemeProvider theme={theme}>
+        <div className="max-w-6xl px-4 py-8 mx-auto sm:py-24 sm:px-6 lg:px-8">
+          <div className="sm:flex sm:flex-col sm:align-center">
+            <h1 className="text-4xl font-extrabold text-custompink sm:text-center sm:text-6xl my-7">
+              Boost Your Trading
+            </h1>
+            <p className="max-w-2xl m-auto text-xl text-zinc-200 sm:text-center sm:text-2xl">
+              트레이딩의 날개를 달아줄 부스터
+            </p>
+            <p className="max-w-2xl m-auto text-xl text-zinc-200 sm:text-center sm:text-2xl">
+              당연히 거래수수료는 돌려받아야죠
+            </p>
+            <div className="flex justify-center items-center mt-6 rounded-lg p-0.5 space-x-4">
+              <div>
+                <FormControl sx={{ m: 1, minWidth: 120 }}>
+                  <InputLabel id="demo-simple-select-helper-label">
+                    거래소
+                  </InputLabel>
+                  <Select
+                    labelId="demo-simple-select-helper-label"
+                    id="demo-simple-select-helper"
+                    value={age}
+                    label="Age"
+                    onChange={handleChange}
+                    style={{backgroundColor:'white'}}
+                  >
+                    <MenuItem defaultValue={"OKX"}>
+                    </MenuItem>
+                    <MenuItem value={"OKX"}>OKX</MenuItem>
+                    
+                  </Select>
+                  
+                </FormControl>
+              </div>
+              <div>
+                <TextField
+                  id="outlined-basic"
+                  label="UID"
+                  variant="outlined"
+                  style={{ backgroundColor: '#FFFFFF' }} // 이 부분을 추가
+                />
+              </div>
+
+              <Button variant="contained">검색</Button>
+            </div>
+            <div className="flex self-center mt-6  p-0.5 ">
+              레퍼럴 코드로 가입된 OKX 계정만 조회가 가능합니다.
+            </div>
+            <Link href={'https://www.okx.com/join/rich20payback'}>
+              <div className="flex justify-center self-center mt-6  p-0.5 underline ">
+                수수료 페이백 계정이 아직도 없으신가요? 지금 가입하기
+              </div>
+            </Link>
+
+            <div className="flex self-center mt-6  p-0.5 ">OKX 코드 가입시</div>
+            <div className="flex self-center mt-6  p-0.5 ">
+              수수료 페이백과 평생 무료 지표
+            </div>
+            <div className="flex self-center mt-6  p-0.5 ">
+              트레이딩뷰 계정만 있다면,
+            </div>
+            <div className="flex self-center mt-6  p-0.5 ">
+              OKX 시그널 봇과 연동이 가능하여
+            </div>
+            <div className="flex self-center mt-6  p-0.5 ">
+              재동매매 전략을 구축할 수 있습니다.
+            </div>
+            <div className="flex justify-center my-10">
+              <Link href="https://www.youtube.com/watch?v=PGjkxG_RN5A&t=16s">
+                <Button variant="contained">자동매매 설정가이드</Button>
+              </Link>
+            </div>
+            <div className="">
+              <Cards></Cards>
+            </div>
+            <div className="flex self-center mt-6  p-0.5 ">
+              OKX 거래소에서 운용이 되지 않을 경우, 스크립트 초대가 취소될 수
+              있습니다.
+            </div>
+
+            <div className="flex self-center mt-6  p-0.5 ">
+              월 구독제 유료 지표
+            </div>
+            <div className="flex self-center mt-6  p-0.5 ">
+              마스터시그널 / 블록쉬프트는 별도 문의
+            </div>
+            <div className="flex self-center mt-6  p-0.5 ">
+              카카오톡 1:1로 문의 주세요
+            </div>
+            <div className="flex justify-center my-5">
+              <Link href={'https://open.kakao.com/o/sBQ7iSZe'}>
+                <Button variant="contained">문의하기</Button>
+              </Link>
+            </div>
           </div>
         </div>
-        <div className="mt-12 space-y-4 sm:mt-16 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6 lg:max-w-4xl lg:mx-auto xl:max-w-none xl:mx-0 xl:grid-cols-3">
-          {products.map((product) => {
-            const price = product?.prices?.find(
-              (price) => price.interval === billingInterval
-            );
-            if (!price) return null;
-            const priceString = new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: price.currency!,
-              minimumFractionDigits: 0
-            }).format((price?.unit_amount || 0) / 100);
-            return (
-              <div
-                key={product.id}
-                className={cn(
-                  'rounded-lg shadow-sm divide-y divide-zinc-600 bg-zinc-900',
-                  {
-                    'border border-pink-500': subscription
-                      ? product.name === subscription?.prices?.products?.name
-                      : product.name === 'Freelancer'
-                  }
-                )}
-              >
-                <div className="p-6">
-                  <h2 className="text-2xl font-semibold leading-6 text-white">
-                    {product.name}
-                  </h2>
-                  <p className="mt-4 text-zinc-300">{product.description}</p>
-                  <p className="mt-8">
-                    <span className="text-5xl font-extrabold white">
-                      {priceString}
-                    </span>
-                    <span className="text-base font-medium text-zinc-100">
-                      /{billingInterval}
-                    </span>
-                  </p>
-                  <Button
-                    variant="slim"
-                    type="button"
-                    disabled={!session}
-                    loading={priceIdLoading === price.id}
-                    onClick={() => handleCheckout(price)}
-                    className="block w-full py-2 mt-8 text-sm font-semibold text-center text-white rounded-md hover:bg-zinc-900"
-                  >
-                    {subscription ? 'Manage' : 'Subscribe'}
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <LogoCloud />
-      </div>
+      </ThemeProvider>
     </section>
-  );
-}
-
-function LogoCloud() {
-  return (
-    <div>
-      <p className="mt-24 text-xs uppercase text-zinc-400 text-center font-bold tracking-[0.3em]">
-        Brought to you by
-      </p>
-      <div className="flex flex-col items-center my-12 space-y-4 sm:mt-8 sm:space-y-0 md:mx-auto md:max-w-2xl sm:grid sm:gap-6 sm:grid-cols-5">
-        <div className="flex items-center justify-start">
-          <a href="https://nextjs.org" aria-label="Next.js Link">
-            <img
-              src="/nextjs.svg"
-              alt="Next.js Logo"
-              className="h-12 text-white"
-            />
-          </a>
-        </div>
-        <div className="flex items-center justify-start">
-          <a href="https://vercel.com" aria-label="Vercel.com Link">
-            <img
-              src="/vercel.svg"
-              alt="Vercel.com Logo"
-              className="h-6 text-white"
-            />
-          </a>
-        </div>
-        <div className="flex items-center justify-start">
-          <a href="https://stripe.com" aria-label="stripe.com Link">
-            <img
-              src="/stripe.svg"
-              alt="stripe.com Logo"
-              className="h-12 text-white"
-            />
-          </a>
-        </div>
-        <div className="flex items-center justify-start">
-          <a href="https://supabase.io" aria-label="supabase.io Link">
-            <img
-              src="/supabase.svg"
-              alt="supabase.io Logo"
-              className="h-10 text-white"
-            />
-          </a>
-        </div>
-        <div className="flex items-center justify-start">
-          <a href="https://github.com" aria-label="github.com Link">
-            <img
-              src="/github.svg"
-              alt="github.com Logo"
-              className="h-8 text-white"
-            />
-          </a>
-        </div>
-      </div>
-    </div>
   );
 }

@@ -12,6 +12,9 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['var(--font-sans)', ...fontFamily.sans]
+      },
+      colors: {
+        custompink: '#FF009B'
       }
     }
   },
